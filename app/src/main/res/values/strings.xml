@@ -1,0 +1,5 @@
+<resources>
+    <string name="app_name">igmmsClient</string>
+    <string name="status">Status</string>
+    <string name="igmms_client">IGMMS client</string>
+</resources>

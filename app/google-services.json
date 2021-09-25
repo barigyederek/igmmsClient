@@ -1,0 +1,39 @@
+{
+  "project_info": {
+    "project_number": "33624439551",
+    "project_id": "igmmsversion1",
+    "storage_bucket": "igmmsversion1.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:33624439551:android:0a9811e015c0537a6deaca",
+        "android_client_info": {
+          "package_name": "com.example.igmmsclient"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "33624439551-c5j60tv71kbio6on6dtlm78q2gl5e39i.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDMtzHHKdVdszaTlU97fGYDXkM2zHzXFQo"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "33624439551-c5j60tv71kbio6on6dtlm78q2gl5e39i.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
