@@ -23,11 +23,15 @@ import com.google.android.gms.location.LocationRequest;
 import com.google.android.gms.location.LocationResult;
 import com.google.android.gms.location.LocationServices;
 import com.google.android.gms.tasks.OnSuccessListener;
+import com.google.firebase.database.DatabaseReference;
+import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.database.IgnoreExtraProperties;
 
 import java.util.List;
 
 
 public class MainActivity extends AppCompatActivity {
+
 
     public static final int default_check = 30000;
     public static final int fastest_check = 5000;
@@ -35,6 +39,10 @@ public class MainActivity extends AppCompatActivity {
     TextView tv_lat, tv_lon, tv_accuracy, tv_address, tv_speed, tv_sensor, tv_altitude, tv_updates;
     Switch sw_locationupdates, sw_gps;
     LocationCallback locationCallBack;
+
+    private FirebaseDatabase db = FirebaseDatabase.getInstance();
+    private DatabaseReference mDatabase = db.getReference();
+
 
     //google api client
     FusedLocationProviderClient fusedLocationProviderClient;
@@ -172,12 +180,15 @@ public class MainActivity extends AppCompatActivity {
         if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED){
             fusedLocationProviderClient.getLastLocation().addOnSuccessListener(this, new OnSuccessListener<Location>() {
                 @Override
-                //after getting permission save them in the location variable
+                //after getting permission save the data in the location variable
                 public void onSuccess(Location location) {
 
                     // method update_UI_values uses the location variable to update the UI
                     update_UI_values(location);
 
+                    writeNewUser("U123",
+                            String.valueOf(location.getLatitude()),
+                            String.valueOf(location.getLongitude()));
                 }
             });
         }
@@ -220,4 +231,38 @@ public class MainActivity extends AppCompatActivity {
 
 
     }
+
+//    WRITING TO THE REALTIME DB COLLECTION
+    public void writeNewUser(String userId, String user_longitude, String user_latitude) {
+        UserLocation user = new UserLocation(user_longitude, user_latitude);
+
+        mDatabase.child("igmmsversion1-default-rtdb").child(userId).setValue(user);
+    }
+
+//    public  class readAndWriteDb{
+//
+//        //        declare a database reference
+//        private FirebaseDatabase db = FirebaseDatabase.getInstance();
+//        private DatabaseReference mDatabase = db.getReference();
+//
+//
+//    }
+
+    @IgnoreExtraProperties
+    public class UserLocation {
+
+        public String user_latitude;
+        public String user_longitude;
+
+        public UserLocation() {
+            // Default constructor required for calls to DataSnapshot.getValue(User.class)
+        }
+
+        public UserLocation(String user_latitude, String user_longitude) {
+            this.user_latitude = user_latitude;
+            this.user_longitude = user_longitude;
+        }
+
+    }
+
 }
