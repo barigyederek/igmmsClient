@@ -8,7 +8,9 @@ import android.location.Geocoder;
 import android.location.Location;
 import android.os.Build;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.View;
+import android.widget.Button;
 import android.widget.Switch;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -27,6 +29,7 @@ import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.IgnoreExtraProperties;
 
+import java.util.HashMap;
 import java.util.List;
 
 
@@ -37,11 +40,12 @@ public class MainActivity extends AppCompatActivity {
     public static final int fastest_check = 5000;
     private static final int PERMISSION_FINE_LOCATION = 99;
     TextView tv_lat, tv_lon, tv_accuracy, tv_address, tv_speed, tv_sensor, tv_altitude, tv_updates;
+    Button status;
     Switch sw_locationupdates, sw_gps;
     LocationCallback locationCallBack;
 
-    private FirebaseDatabase db = FirebaseDatabase.getInstance();
-    private DatabaseReference mDatabase = db.getReference();
+    public FirebaseDatabase db = FirebaseDatabase.getInstance();
+    public DatabaseReference mDatabase = db.getReference();
 
 
     //google api client
@@ -64,6 +68,7 @@ public class MainActivity extends AppCompatActivity {
         tv_address = findViewById(R.id.tv_address);
         sw_gps = findViewById(R.id.sw_gps);
         sw_locationupdates = findViewById(R.id.sw_locationsupdates);
+        status = findViewById(R.id.button);
 
 
 
@@ -117,9 +122,18 @@ public class MainActivity extends AppCompatActivity {
                     tv_sensor.setText("Your location is private");
                 }
             }
+
+
         });
 
         update_GPS();
+        status.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                System.out.println(tv_lat.getText());
+                Log.d("LOGGED CORDINATES", "onClick: " + tv_lat.getText());
+            }
+        });
 
     }
     // on create method ends here
@@ -237,6 +251,8 @@ public class MainActivity extends AppCompatActivity {
         UserLocation user = new UserLocation(user_longitude, user_latitude);
 
         mDatabase.child("igmmsversion1-default-rtdb").child(userId).setValue(user);
+
+
     }
 
 //    public  class readAndWriteDb{
@@ -263,6 +279,10 @@ public class MainActivity extends AppCompatActivity {
             this.user_longitude = user_longitude;
         }
 
+
+        public String getUser_latitude() {
+            return user_latitude;
+        }
     }
 
 }
