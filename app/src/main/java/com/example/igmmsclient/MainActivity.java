@@ -44,8 +44,10 @@ public class MainActivity extends AppCompatActivity {
     Switch sw_locationupdates, sw_gps;
     LocationCallback locationCallBack;
 
-    public FirebaseDatabase db = FirebaseDatabase.getInstance();
-    public DatabaseReference mDatabase = db.getReference();
+//    public FirebaseDatabase db = FirebaseDatabase.getInstance();
+//    public DatabaseReference mDatabase = db.getReference();
+
+
 
 
     //google api client
@@ -119,7 +121,7 @@ public class MainActivity extends AppCompatActivity {
 
                 } else {
                     stopLocationUpdates();
-                    tv_sensor.setText("Your location is private");
+                    tv_sensor.setText("");
                 }
             }
 
@@ -201,8 +203,9 @@ public class MainActivity extends AppCompatActivity {
                     update_UI_values(location);
 
                     writeNewUser("U123",
-                            String.valueOf(location.getLatitude()),
-                            String.valueOf(location.getLongitude()));
+                            String.valueOf(location.getLongitude()),
+                            String.valueOf(location.getLatitude())
+                    );
                 }
             });
         }
@@ -248,6 +251,10 @@ public class MainActivity extends AppCompatActivity {
 
 //    WRITING TO THE REALTIME DB COLLECTION
     public void writeNewUser(String userId, String user_longitude, String user_latitude) {
+        DatabaseReference mDatabase;
+// ...
+        mDatabase = FirebaseDatabase.getInstance().getReference();
+
         UserLocation user = new UserLocation(user_longitude, user_latitude);
 
         mDatabase.child("igmmsversion1-default-rtdb").child(userId).setValue(user);
