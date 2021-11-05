@@ -19,20 +19,35 @@ import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 
+import com.android.volley.AuthFailureError;
+import com.android.volley.NetworkResponse;
+import com.android.volley.Request;
+import com.android.volley.RequestQueue;
+import com.android.volley.Response;
+import com.android.volley.ServerError;
+import com.android.volley.VolleyError;
+import com.android.volley.toolbox.HttpHeaderParser;
+import com.android.volley.toolbox.StringRequest;
+import com.android.volley.toolbox.Volley;
+import com.example.igmmsclient.URL.URL;
 import com.google.android.gms.location.FusedLocationProviderClient;
 import com.google.android.gms.location.LocationCallback;
 import com.google.android.gms.location.LocationRequest;
 import com.google.android.gms.location.LocationResult;
 import com.google.android.gms.location.LocationServices;
 import com.google.android.gms.tasks.OnSuccessListener;
-import com.google.firebase.database.DatabaseReference;
-import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.IgnoreExtraProperties;
 
+import org.json.JSONException;
+import org.json.JSONObject;
+
+import java.io.UnsupportedEncodingException;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 
+@SuppressWarnings("deprecation")
 public class MainActivity extends AppCompatActivity {
 
 
@@ -43,9 +58,9 @@ public class MainActivity extends AppCompatActivity {
     Button status;
     Switch sw_locationupdates, sw_gps;
     LocationCallback locationCallBack;
+    String lat, lon;
+    private RequestQueue requestQueue;
 
-//    public FirebaseDatabase db = FirebaseDatabase.getInstance();
-//    public DatabaseReference mDatabase = db.getReference();
 
 
 
@@ -59,7 +74,11 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        //give each  UI variable a value
+//      create and connectWebSocket
+
+
+
+            //give each  UI variable a value
         tv_lat = findViewById(R.id.tv_lat);
         tv_lon = findViewById(R.id.tv_lon);
         tv_accuracy = findViewById(R.id.tv_accuracy);
@@ -136,11 +155,15 @@ public class MainActivity extends AppCompatActivity {
                 Log.d("LOGGED CORDINATES", "onClick: " + tv_lat.getText());
             }
         });
+         requestQueue = Volley.newRequestQueue(MainActivity.this);
 
     }
     // on create method ends here
 
 
+
+
+//    location updates enabled and disabled below
     @SuppressLint("SetTextI18n")
     private void stopLocationUpdates() {
 
@@ -162,7 +185,12 @@ public class MainActivity extends AppCompatActivity {
         tv_lat.setText("your location is being tracked");
 
         fusedLocationProviderClient.requestLocationUpdates(locationRequest, locationCallBack, null);
+//        update GPS fields function
         update_GPS();
+
+//        function to updatelocation values in my local database fires when functions startLocationUpdates fires
+        updateLocation();
+
     }
 
 
@@ -202,10 +230,7 @@ public class MainActivity extends AppCompatActivity {
                     // method update_UI_values uses the location variable to update the UI
                     update_UI_values(location);
 
-                    writeNewUser("U123",
-                            String.valueOf(location.getLongitude()),
-                            String.valueOf(location.getLatitude())
-                    );
+
                 }
             });
         }
@@ -223,6 +248,7 @@ public class MainActivity extends AppCompatActivity {
         tv_lat.setText(String.valueOf(location.getLatitude()));
         tv_lon.setText(String.valueOf(location.getLongitude()));
         tv_accuracy.setText(String.valueOf(location.getAccuracy()));
+
 
         if (location.hasAltitude()){
             tv_altitude.setText(String.valueOf(location.getAltitude()));
@@ -246,50 +272,58 @@ public class MainActivity extends AppCompatActivity {
             tv_address.setText("Unable to find your street address");
         }
 
-
+        lat = String.valueOf(location.getLatitude());
+        lon = String.valueOf(location.getLongitude());
     }
 
-//    WRITING TO THE REALTIME DB COLLECTION
-    public void writeNewUser(String userId, String user_longitude, String user_latitude) {
-        DatabaseReference mDatabase;
-// ...
-        mDatabase = FirebaseDatabase.getInstance().getReference();
 
-        UserLocation user = new UserLocation(user_longitude, user_latitude);
 
-        mDatabase.child("igmmsversion1-default-rtdb").child(userId).setValue(user);
+//    the function to update location data to my local database updateLocation();
+    public void updateLocation(){
+        StringRequest stringRequest = new StringRequest(Request.Method.POST, URL.updateLocation,
+                new Response.Listener<String>() {
+                    public void onResponse(String response) {
+
+//                        Toast.makeText(getApplicationContext(), "Account created! proceed to login", Toast.LENGTH_LONG).show();
+//                        Intent intent = new Intent(RequestQuickService.this, MapsActivity.class);
+//                        startActivity(intent);
+                    }
+                },
+                new Response.ErrorListener() {
+                    @Override
+                    public void onErrorResponse(VolleyError error) {
+                        NetworkResponse response = error.networkResponse;
+                        if (error instanceof ServerError && response != null) {
+                            try {
+                                String res = new String(response.data,
+                                        HttpHeaderParser.parseCharset(response.headers, "utf-8"));
+                                JSONObject obj = new JSONObject(res);
+                            } catch (UnsupportedEncodingException e1) {
+                                e1.printStackTrace();
+                            } catch (JSONException e2) {
+                                e2.printStackTrace();
+                            }
+                        }
+
+//                        Toast.makeText(getApplicationContext(), error.toString(), Toast.LENGTH_SHORT).show();
+                    }
+                })
+        {
+//            hash map to send data to my local data base
+            @Override
+            protected Map<String, String> getParams() throws AuthFailureError {
+                HashMap<String, String> params = new HashMap<>();
+                params.put("longitude", String.valueOf(lon));
+                params.put("latitude", String.valueOf(lat));
+                params.put("animal_tag","999");
+
+                return params;
+            }
+        };
+        // Creating RequestQueue.
+        RequestQueue requestQueue = Volley.newRequestQueue(MainActivity.this);
+        requestQueue.add(stringRequest);
 
 
     }
-
-//    public  class readAndWriteDb{
-//
-//        //        declare a database reference
-//        private FirebaseDatabase db = FirebaseDatabase.getInstance();
-//        private DatabaseReference mDatabase = db.getReference();
-//
-//
-//    }
-
-    @IgnoreExtraProperties
-    public class UserLocation {
-
-        public String user_latitude;
-        public String user_longitude;
-
-        public UserLocation() {
-            // Default constructor required for calls to DataSnapshot.getValue(User.class)
-        }
-
-        public UserLocation(String user_latitude, String user_longitude) {
-            this.user_latitude = user_latitude;
-            this.user_longitude = user_longitude;
-        }
-
-
-        public String getUser_latitude() {
-            return user_latitude;
-        }
-    }
-
 }
