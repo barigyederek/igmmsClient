@@ -8,7 +8,9 @@ import android.location.Geocoder;
 import android.location.Location;
 import android.os.Build;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.View;
+import android.widget.Button;
 import android.widget.Switch;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -17,6 +19,17 @@ import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 
+import com.android.volley.AuthFailureError;
+import com.android.volley.NetworkResponse;
+import com.android.volley.Request;
+import com.android.volley.RequestQueue;
+import com.android.volley.Response;
+import com.android.volley.ServerError;
+import com.android.volley.VolleyError;
+import com.android.volley.toolbox.HttpHeaderParser;
+import com.android.volley.toolbox.StringRequest;
+import com.android.volley.toolbox.Volley;
+import com.example.igmmsclient.URL.URL;
 import com.google.android.gms.location.FusedLocationProviderClient;
 import com.google.android.gms.location.LocationCallback;
 import com.google.android.gms.location.LocationRequest;
@@ -24,17 +37,32 @@ import com.google.android.gms.location.LocationResult;
 import com.google.android.gms.location.LocationServices;
 import com.google.android.gms.tasks.OnSuccessListener;
 
+import org.json.JSONException;
+import org.json.JSONObject;
+
+import java.io.UnsupportedEncodingException;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 
+@SuppressWarnings("deprecation")
 public class MainActivity extends AppCompatActivity {
+
 
     public static final int default_check = 30000;
     public static final int fastest_check = 5000;
     private static final int PERMISSION_FINE_LOCATION = 99;
-    TextView tv_lat, tv_lon, tv_accuracy, tv_address, tv_speed, tv_sensor, tv_altitude, tv_updates;
+    TextView tv_lat, tv_lon, tv_accuracy, tv_address, tv_speed, tv_sensor, tv_altitude, tv_updates, connectText;
+    Button status, ConnectButton;
     Switch sw_locationupdates, sw_gps;
     LocationCallback locationCallBack;
+    String lat, lon;
+    private RequestQueue requestQueue;
+
+
+
+
 
     //google api client
     FusedLocationProviderClient fusedLocationProviderClient;
@@ -45,7 +73,11 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        //give each  UI variable a value
+
+
+
+
+            //give each  UI variable a value
         tv_lat = findViewById(R.id.tv_lat);
         tv_lon = findViewById(R.id.tv_lon);
         tv_accuracy = findViewById(R.id.tv_accuracy);
@@ -56,6 +88,9 @@ public class MainActivity extends AppCompatActivity {
         tv_address = findViewById(R.id.tv_address);
         sw_gps = findViewById(R.id.sw_gps);
         sw_locationupdates = findViewById(R.id.sw_locationsupdates);
+        status = findViewById(R.id.button);
+        ConnectButton =findViewById(R.id.connectbtn);
+        connectText =findViewById(R.id.connecttxt);
 
 
 
@@ -106,17 +141,41 @@ public class MainActivity extends AppCompatActivity {
 
                 } else {
                     stopLocationUpdates();
-                    tv_sensor.setText("Your location is private");
+                    tv_sensor.setText("");
                 }
+            }
+
+
+        });
+//        connect button on click action listener
+        ConnectButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                connectText.getText().toString();
             }
         });
 
         update_GPS();
 
+//        status button click event handler
+        status.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                System.out.println(tv_lat.getText());
+                Log.d("LOGGED CORDINATES", "onClick: " + tv_lat.getText() + tv_lon.getText())  ;
+            }
+        });
+         requestQueue = Volley.newRequestQueue(MainActivity.this);
+
     }
     // on create method ends here
 
 
+private void Connectbtn (String url){
+
+}
+
+//    location updates enabled and disabled below
     @SuppressLint("SetTextI18n")
     private void stopLocationUpdates() {
 
@@ -138,7 +197,12 @@ public class MainActivity extends AppCompatActivity {
         tv_lat.setText("your location is being tracked");
 
         fusedLocationProviderClient.requestLocationUpdates(locationRequest, locationCallBack, null);
+//        update GPS fields function
         update_GPS();
+
+//        function to updatelocation values in my local database fires when functions startLocationUpdates fires
+        updateLocation();
+
     }
 
 
@@ -172,11 +236,12 @@ public class MainActivity extends AppCompatActivity {
         if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED){
             fusedLocationProviderClient.getLastLocation().addOnSuccessListener(this, new OnSuccessListener<Location>() {
                 @Override
-                //after getting permission save them in the location variable
+                //after getting permission save the data in the location variable
                 public void onSuccess(Location location) {
 
                     // method update_UI_values uses the location variable to update the UI
                     update_UI_values(location);
+
 
                 }
             });
@@ -195,6 +260,7 @@ public class MainActivity extends AppCompatActivity {
         tv_lat.setText(String.valueOf(location.getLatitude()));
         tv_lon.setText(String.valueOf(location.getLongitude()));
         tv_accuracy.setText(String.valueOf(location.getAccuracy()));
+
 
         if (location.hasAltitude()){
             tv_altitude.setText(String.valueOf(location.getAltitude()));
@@ -217,6 +283,57 @@ public class MainActivity extends AppCompatActivity {
         catch (Exception e){
             tv_address.setText("Unable to find your street address");
         }
+
+        lat = String.valueOf(location.getLatitude());
+        lon = String.valueOf(location.getLongitude());
+    }
+
+
+
+//    the function to update location data to my local database updateLocation();
+    public void updateLocation(){
+        StringRequest stringRequest = new StringRequest(Request.Method.POST, URL.updateLocation,
+                new Response.Listener<String>() {
+                    public void onResponse(String response) {
+
+//                        Toast.makeText(getApplicationContext(), "", Toast.LENGTH_LONG).show();
+
+                    }
+                },
+                new Response.ErrorListener() {
+                    @Override
+                    public void onErrorResponse(VolleyError error) {
+                        NetworkResponse response = error.networkResponse;
+                        if (error instanceof ServerError && response != null) {
+                            try {
+                                String res = new String(response.data,
+                                        HttpHeaderParser.parseCharset(response.headers, "utf-8"));
+                                JSONObject obj = new JSONObject(res);
+                            } catch (UnsupportedEncodingException e1) {
+                                e1.printStackTrace();
+                            } catch (JSONException e2) {
+                                e2.printStackTrace();
+                            }
+                        }
+
+//                        Toast.makeText(getApplicationContext(), error.toString(), Toast.LENGTH_SHORT).show();
+                    }
+                })
+        {
+//            hash map to send data to my local data base
+            @Override
+            protected Map<String, String> getParams() throws AuthFailureError {
+                HashMap<String, String> params = new HashMap<>();
+                params.put("longitude", String.valueOf(lon));
+                params.put("latitude", String.valueOf(lat));
+                params.put("animal_tag","999");
+
+                return params;
+            }
+        };
+        // Creating RequestQueue.
+        RequestQueue requestQueue = Volley.newRequestQueue(MainActivity.this);
+        requestQueue.add(stringRequest);
 
 
     }
