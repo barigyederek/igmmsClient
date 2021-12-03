@@ -27,17 +27,13 @@ public class ServiceHandler {
     static InputStream is = null;
     static String response = null;
 
-    public ServiceHandler() {
-
-    }
-
+    public ServiceHandler() { }
 
     public String makeServiceCall(String url, int method) {
         return this.makeServiceCall(url, method, null);
     }
 
-    public String makeServiceCall(String url, int method,
-                                  List<NameValuePair> params) {
+    public String makeServiceCall(String url, int method, List<NameValuePair> params) {
         try {
             // http client
             DefaultHttpClient httpClient = new DefaultHttpClient();
