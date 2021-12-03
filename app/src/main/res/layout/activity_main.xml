@@ -270,4 +270,28 @@
         android:orientation="horizontal"
         app:layout_constraintGuide_begin="173dp" />
 
+    <Button
+        android:id="@+id/connectbtn"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="10dp"
+        android:layout_marginBottom="8dp"
+        android:text="Connect"
+        app:layout_constraintBottom_toTopOf="@+id/sw_locationsupdates"
+        app:layout_constraintEnd_toStartOf="@+id/connecttxt"
+        app:layout_constraintStart_toStartOf="@+id/guideline4"
+        app:layout_constraintTop_toBottomOf="@+id/tv_lbladdress" />
+
+    <TextView
+        android:id="@+id/connecttxt"
+        android:layout_width="185dp"
+        android:layout_height="38dp"
+        android:layout_marginStart="19dp"
+        android:layout_marginBottom="11dp"
+        android:text="...proxy server url..."
+        android:hint="..proxy server url..."
+        app:layout_constraintBottom_toTopOf="@+id/sw_locationsupdates"
+        app:layout_constraintEnd_toStartOf="@+id/guideline5"
+        app:layout_constraintStart_toEndOf="@+id/connectbtn" />
+
 </androidx.constraintlayout.widget.ConstraintLayout>
